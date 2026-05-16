@@ -8,8 +8,8 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-import requests
 import json
+import re
 
 def call_llm(prompt):
 
@@ -28,10 +28,16 @@ def call_llm(prompt):
     )
 
     result = response.json()
-
     content = result["choices"][0]["message"]["content"]
 
-    return content
+    # 🔥 Remove markdown if present
+    cleaned = re.sub(r"```json\n|\n```", "", content).strip()
+
+    # 🔥 Convert to dict
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        raise ValueError(f"Invalid JSON from LLM: {content}")
 
 
 def generate_summary(metrics):
@@ -39,93 +45,40 @@ def generate_summary(metrics):
     prompt = f"""
 You are an AI learning analytics expert.
 
-Based on the following ChatGPT usage metrics, generate a short summary of the user's learning behavior.
+Based on the following ChatGPT usage metrics,
 
 Metrics:
 {metrics}
 
-Return ONLY 2-3 sentences summary.
+Provide a structured learning feedback including:
+
+1. Summary of knowledge level
+2. Strengths
+3. Weaknesses
+4. Recommendations for improvement
+
+Return STRICT JSON format:
+{{
+ "summary": "...",
+ "strengths": ["..."],
+ "weaknesses": ["..."],
+ "recommendations": ["..."]
+}}
 """
 
     return call_llm(prompt)
 
 
-def generate_strengths(metrics):
-
-    prompt = f"""
-Analyze the following ChatGPT learning metrics and identify the user's strengths.
-
-Metrics:
-{metrics}
-
-Return a 2-3 bullet points of strengths.
-
-Example:
-"Strong technical engagement", "Consistent learning habit"
-"""
-
-    response = call_llm(prompt)
-
-    try:
-        return json.loads(response)
-    except:
-        return [response]
-
-
-def generate_weaknesses(metrics):
-
-    prompt = f"""
-Analyze the following ChatGPT learning metrics and identify weaknesses in the user's learning pattern.
-
-Metrics:
-{metrics}
-
-Return 2-3 bullet points of weaknesses.
-"""
-
-    response = call_llm(prompt)
-
-    try:
-        return json.loads(response)
-    except:
-        return [response]
-
-
-def generate_recommendations(metrics):
-
-    prompt = f"""
-Based on these ChatGPT usage metrics, suggest recommendations to improve learning productivity.
-
-Metrics:
-{metrics}
-
-Return 2-3 bullet points of recommendations.
-"""
-
-    response = call_llm(prompt)
-
-    try:
-        return json.loads(response)
-    except:
-        return [response]
+ 
 
 
 def ai_productivity_analysis(metrics):
 
-    summary = generate_summary(metrics)
+    response = generate_summary(metrics)
 
-    strengths = generate_strengths(metrics)
 
-    weaknesses = generate_weaknesses(metrics)
-
-    recommendations = generate_recommendations(metrics)
-
-    return {
-        "summary": summary,
-        "strengths": strengths,
-        "weaknesses": weaknesses,
-        "recommendations": recommendations
-    }
+    return response 
+    
 
 def analyze_productivity(metrics):
 
