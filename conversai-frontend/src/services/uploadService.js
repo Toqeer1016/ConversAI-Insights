@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8080"; // your FastAPI backend
+const BASE_URL = "http://127.0.0.1:8000"; // your FastAPI backend
 
 export async function uploadChatFile(file) {
   const formData = new FormData();
