@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8000"; // your FastAPI backend
+const BASE_URL = "https://conversai-insights.onrender.com"; // your FastAPI backend
 
 export async function uploadChatFile(file) {
   const formData = new FormData();
